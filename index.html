@@ -104,44 +104,30 @@
         photo: canvas.toDataURL('image/png')
       };
 
-      fetch("https://script.google.com/macros/s/AKfycbzqha64Q08bo_GSBZHPfJUUC7-dk2XH34NhKwGNbndQ49jTbsYZ08mzDGDF13e51msB/exec", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(res => res.json())
-      .then(result => {
-        if (result.status === "success") {
-          alert("Ingreso registrado correctamente.");
-          retakePhoto();
-          document.getElementById('visitorForm').reset();
-        } else {
-          alert("Error al registrar: " + result.message);
-        }
-      })
-      .catch(err => {
-        alert("Error de conexión con el servidor: " + err);
-      });
+      google.script.run.withSuccessHandler(() => {
+        alert("Ingreso registrado correctamente.");
+        retakePhoto();
+        document.getElementById('visitorForm').reset();
+      }).withFailureHandler(err => {
+        alert("Error al registrar: " + err.message);
+      }).registrarIngreso(data);
     });
 
     function registerExit() {
       const userId = prompt("Ingrese el número de cédula del visitante que se retira:");
       if (!userId) return;
 
-      fetch(`https://script.google.com/macros/s/AKfycbzqha64Q08bo_GSBZHPfJUUC7-dk2XH34NhKwGNbndQ49jTbsYZ08mzDGDF13e51msB/exec?id=${userId}`)
-        .then(res => res.json())
-        .then(result => {
-          if (result.status === "success") {
-            alert("Salida registrada exitosamente.");
-          } else if (result.status === "not_found") {
-            alert("No se encontró un ingreso activo para esta cédula.");
-          } else {
-            alert("Error al registrar salida: " + result.message);
-          }
-        })
-        .catch(err => {
-          alert("Error al conectar con el servidor: " + err);
-        });
+      google.script.run.withSuccessHandler(result => {
+        if (result === "success") {
+          alert("Salida registrada exitosamente.");
+        } else if (result === "not_found") {
+          alert("No se encontró un ingreso activo para esta cédula.");
+        } else {
+          alert("Error al registrar salida: " + result);
+        }
+      }).withFailureHandler(err => {
+        alert("Error al conectar con el servidor: " + err.message);
+      }).registrarSalida(userId);
     }
   </script>
 </body>
