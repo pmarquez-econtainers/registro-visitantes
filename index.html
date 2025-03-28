@@ -63,6 +63,7 @@
     <div class="button-group">
       <button type="submit">Registrar Ingreso</button>
       <button type="button" onclick="registerExit()">Registrar Salida</button>
+      <button type="button" onclick="generateMonthlyReport()">Informe Mensual</button>
     </div>
   </form>
 
@@ -71,10 +72,11 @@
     const canvas = document.getElementById('canvas');
     const preview = document.getElementById('canvas-preview');
     const context = canvas.getContext('2d');
+    const SCRIPT_URL = "https://script.google.com/a/macros/econtainers.co/s/AKfycbzZnZ95r5Ayd0RnHOM1bVYxnr6kw8AOyf3hwZZy6Wao6LoLEwiRDmDWv1Y6FbT9sCsH/exec";
 
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => video.srcObject = stream)
-      .catch(error => alert('No se pudo acceder a la cámara'));
+      .catch(error => alert('No se pudo acceder a la cámara: ' + error));
 
     function takePhoto() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -83,7 +85,6 @@
     }
 
     function retakePhoto() {
-      canvas.style.display = 'none';
       preview.src = '';
       preview.style.display = 'none';
     }
@@ -104,30 +105,57 @@
         photo: canvas.toDataURL('image/png')
       };
 
-      google.script.run.withSuccessHandler(() => {
-        alert("Ingreso registrado correctamente.");
-        retakePhoto();
-        document.getElementById('visitorForm').reset();
-      }).withFailureHandler(err => {
-        alert("Error al registrar: " + err.message);
-      }).registrarIngreso(data);
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === "success") {
+          alert("Ingreso registrado correctamente.");
+          retakePhoto();
+          document.getElementById('visitorForm').reset();
+        } else {
+          alert("Error al registrar: " + result.message);
+        }
+      })
+      .catch(err => alert("Error de conexión con el servidor: " + err));
     });
 
     function registerExit() {
       const userId = prompt("Ingrese el número de cédula del visitante que se retira:");
       if (!userId) return;
 
-      google.script.run.withSuccessHandler(result => {
-        if (result === "success") {
-          alert("Salida registrada exitosamente.");
-        } else if (result === "not_found") {
-          alert("No se encontró un ingreso activo para esta cédula.");
-        } else {
-          alert("Error al registrar salida: " + result);
-        }
-      }).withFailureHandler(err => {
-        alert("Error al conectar con el servidor: " + err.message);
-      }).registrarSalida(userId);
+      fetch(`${SCRIPT_URL}?id=${userId}`)
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === "success") {
+            alert("Salida registrada exitosamente.");
+          } else if (result.status === "not_found") {
+            alert("No se encontró un ingreso activo para esta cédula.");
+          } else {
+            alert("Error al registrar salida: " + result.message);
+          }
+        })
+        .catch(err => alert("Error al conectar con el servidor: " + err));
+    }
+
+    function generateMonthlyReport() {
+      const month = prompt("Ingrese el mes (YYYY-MM, ej. 2025-03):");
+      if (!month) return;
+
+      fetch(`${SCRIPT_URL}?month=${month}`)
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === "success") {
+            const visitantes = result.data.length;
+            alert(`Visitantes en ${month}: ${visitantes}\nRevisa los detalles en la hoja de cálculo.`);
+          } else {
+            alert("Error al generar el informe: " + result.message);
+          }
+        })
+        .catch(err => alert("Error al conectar: " + err));
     }
   </script>
 </body>
