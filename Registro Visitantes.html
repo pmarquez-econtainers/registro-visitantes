@@ -112,7 +112,7 @@
         headers: { "Content-Type": "application/json" }
       })
       .then(() => {
-        alert("Ingreso registrado correctamente (respuesta no verificada por CORS).");
+        alert("Ingreso registrado correctamente.");
         retakePhoto();
         document.getElementById('visitorForm').reset();
       })
@@ -128,7 +128,7 @@
         mode: "no-cors"
       })
       .then(() => {
-        alert("Salida registrada exitosamente (respuesta no verificada por CORS).");
+        alert("Salida registrada exitosamente.");
       })
       .catch(err => alert("Error al conectar con el servidor: " + err));
     }
@@ -142,7 +142,7 @@
         mode: "no-cors"
       })
       .then(() => {
-        alert("Informe solicitado. Revisa los detalles en la hoja de cálculo (respuesta no verificada por CORS).");
+        alert("Informe solicitado. Revisa los detalles en la hoja de cálculo.");
       })
       .catch(err => alert("Error al conectar: " + err));
     }
