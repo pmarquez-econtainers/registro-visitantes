@@ -72,7 +72,7 @@
     const canvas = document.getElementById('canvas');
     const preview = document.getElementById('canvas-preview');
     const context = canvas.getContext('2d');
-    const SCRIPT_URL = "https://script.google.com/a/macros/econtainers.co/s/AKfycbzZnZ95r5Ayd0RnHOM1bVYxnr6kw8AOyf3hwZZy6Wao6LoLEwiRDmDWv1Y6FbT9sCsH/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyPjgFz087JMgMTQLGwO1iC8b5VYpY9OVSZ2RtidHbkoMFAv1pLGfRUD-cHgIwxEwA/exec";
 
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => video.srcObject = stream)
@@ -107,12 +107,11 @@
 
       fetch(SCRIPT_URL, {
         method: "POST",
-        mode: "no-cors", // Desactiva CORS
+        mode: "no-cors",
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }
       })
       .then(() => {
-        // No podemos leer la respuesta debido a "no-cors", pero asumimos éxito
         alert("Ingreso registrado correctamente (respuesta no verificada por CORS).");
         retakePhoto();
         document.getElementById('visitorForm').reset();
@@ -126,10 +125,9 @@
 
       fetch(`${SCRIPT_URL}?id=${userId}`, {
         method: "GET",
-        mode: "no-cors" // Desactiva CORS
+        mode: "no-cors"
       })
       .then(() => {
-        // No podemos leer la respuesta debido a "no-cors", pero asumimos éxito
         alert("Salida registrada exitosamente (respuesta no verificada por CORS).");
       })
       .catch(err => alert("Error al conectar con el servidor: " + err));
@@ -141,10 +139,9 @@
 
       fetch(`${SCRIPT_URL}?month=${month}`, {
         method: "GET",
-        mode: "no-cors" // Desactiva CORS
+        mode: "no-cors"
       })
       .then(() => {
-        // No podemos leer la respuesta debido a "no-cors"
         alert("Informe solicitado. Revisa los detalles en la hoja de cálculo (respuesta no verificada por CORS).");
       })
       .catch(err => alert("Error al conectar: " + err));
