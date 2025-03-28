@@ -32,6 +32,13 @@
       margin: 10px auto;
       border: 1px solid #ccc;
     }
+    #successMessage {
+      text-align: center;
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -63,8 +70,8 @@
     <div class="button-group">
       <button type="submit">Registrar Ingreso</button>
       <button type="button" onclick="registerExit()">Registrar Salida</button>
-      <button type="button" onclick="generateMonthlyReport()">Informe Mensual</button>
     </div>
+    <div id="successMessage">✅ Ingreso registrado exitosamente.</div>
   </form>
 
   <script>
@@ -72,11 +79,11 @@
     const canvas = document.getElementById('canvas');
     const preview = document.getElementById('canvas-preview');
     const context = canvas.getContext('2d');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyPjgFz087JMgMTQLGwO1iC8b5VYpY9OVSZ2RtidHbkoMFAv1pLGfRUD-cHgIwxEwA/exec";
+    const successMessage = document.getElementById('successMessage');
 
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => video.srcObject = stream)
-      .catch(error => alert('No se pudo acceder a la cámara: ' + error));
+      .catch(error => alert('No se pudo acceder a la cámara'));
 
     function takePhoto() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -85,12 +92,27 @@
     }
 
     function retakePhoto() {
+      canvas.style.display = 'none';
       preview.src = '';
       preview.style.display = 'none';
     }
 
     document.getElementById('visitorForm').addEventListener('submit', function(e) {
       e.preventDefault();
+
+      if (!preview.src || preview.src === '') {
+        alert("Por favor tome una foto antes de registrar el ingreso.");
+        return;
+      }
+
+      const inputs = document.querySelectorAll('#visitorForm input[required], #visitorForm textarea[required]');
+      for (const input of inputs) {
+        if (!input.value.trim()) {
+          alert("Por favor complete todos los campos obligatorios.");
+          return;
+        }
+      }
+
       const data = {
         name: document.getElementById('name').value,
         id: document.getElementById('id').value,
@@ -105,43 +127,31 @@
         photo: canvas.toDataURL('image/png')
       };
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(() => {
-        alert("Ingreso registrado correctamente (respuesta no verificada por CORS).");
+      google.script.run.withSuccessHandler(() => {
+        successMessage.style.display = 'block';
+        setTimeout(() => successMessage.style.display = 'none', 4000);
         retakePhoto();
         document.getElementById('visitorForm').reset();
-      })
-      .catch(err => alert("Error de conexión con el servidor: " + err));
+      }).withFailureHandler(err => {
+        alert("Error al registrar: " + err.message);
+      }).registrarIngreso(data);
     });
 
     function registerExit() {
       const userId = prompt("Ingrese el número de cédula del visitante que se retira:");
       if (!userId) return;
 
-      fetch(`${SCRIPT_URL}?id=${userId}`, {
-        method: "GET",
-        mode: "no-cors"
-      })
-      .then(() => {
-        alert("Salida registrada exitosamente (respuesta no verificada por CORS).");
-      })
-      .catch(err => alert("Error al conectar con el servidor: " + err));
-    }
-
-    function generateMonthlyReport() {
-      const month = prompt("Ingrese el mes (YYYY-MM, ej. 2025-03):");
-      if (!month) return;
-
-      fetch(`${SCRIPT_URL}?month=${month}`, {
-        method: "GET",
-        mode: "no-cors"
-      })
-      .catch(err => alert("Error al conectar: " + err));
+      google.script.run.withSuccessHandler(result => {
+        if (result === "success") {
+          alert("Salida registrada exitosamente.");
+        } else if (result === "not_found") {
+          alert("No se encontró un ingreso activo para esta cédula.");
+        } else {
+          alert("Error al registrar salida: " + result);
+        }
+      }).withFailureHandler(err => {
+        alert("Error al conectar con el servidor: " + err.message);
+      }).registrarSalida(userId);
     }
   </script>
 </body>
