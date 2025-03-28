@@ -106,20 +106,16 @@
       };
 
       fetch(SCRIPT_URL, {
-        method: "POST", 
-	mode: "no-cors",
+        method: "POST",
+        mode: "no-cors", // Desactiva CORS
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" }
       })
-      .then(res => res.json())
-      .then(result => {
-        if (result.status === "success") {
-          alert("Ingreso registrado correctamente.");
-          retakePhoto();
-          document.getElementById('visitorForm').reset();
-        } else {
-          alert("Error al registrar: " + result.message);
-        }
+      .then(() => {
+        // No podemos leer la respuesta debido a "no-cors", pero asumimos éxito
+        alert("Ingreso registrado correctamente (respuesta no verificada por CORS).");
+        retakePhoto();
+        document.getElementById('visitorForm').reset();
       })
       .catch(err => alert("Error de conexión con el servidor: " + err));
     });
@@ -128,35 +124,30 @@
       const userId = prompt("Ingrese el número de cédula del visitante que se retira:");
       if (!userId) return;
 
-      fetch(`${SCRIPT_URL}?id=${userId}`)
-        .then(res => res.json())
-        .then(result => {
-          if (result.status === "success") {
-            alert("Salida registrada exitosamente.");
-          } else if (result.status === "not_found") {
-            alert("No se encontró un ingreso activo para esta cédula.");
-          } else {
-            alert("Error al registrar salida: " + result.message);
-          }
-        })
-        .catch(err => alert("Error al conectar con el servidor: " + err));
+      fetch(`${SCRIPT_URL}?id=${userId}`, {
+        method: "GET",
+        mode: "no-cors" // Desactiva CORS
+      })
+      .then(() => {
+        // No podemos leer la respuesta debido a "no-cors", pero asumimos éxito
+        alert("Salida registrada exitosamente (respuesta no verificada por CORS).");
+      })
+      .catch(err => alert("Error al conectar con el servidor: " + err));
     }
 
     function generateMonthlyReport() {
       const month = prompt("Ingrese el mes (YYYY-MM, ej. 2025-03):");
       if (!month) return;
 
-      fetch(`${SCRIPT_URL}?month=${month}`)
-        .then(res => res.json())
-        .then(result => {
-          if (result.status === "success") {
-            const visitantes = result.data.length;
-            alert(`Visitantes en ${month}: ${visitantes}\nRevisa los detalles en la hoja de cálculo.`);
-          } else {
-            alert("Error al generar el informe: " + result.message);
-          }
-        })
-        .catch(err => alert("Error al conectar: " + err));
+      fetch(`${SCRIPT_URL}?month=${month}`, {
+        method: "GET",
+        mode: "no-cors" // Desactiva CORS
+      })
+      .then(() => {
+        // No podemos leer la respuesta debido a "no-cors"
+        alert("Informe solicitado. Revisa los detalles en la hoja de cálculo (respuesta no verificada por CORS).");
+      })
+      .catch(err => alert("Error al conectar: " + err));
     }
   </script>
 </body>
